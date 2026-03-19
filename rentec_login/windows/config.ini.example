@@ -1,0 +1,11 @@
+# VPS connection settings
+# Copy this file to config.ini and fill in your values
+
+# Hostname or IP address of your VPS
+VPS_HOST=your-vps-ip-or-hostname
+
+# SSH username on the VPS
+VPS_USER=your_ssh_username
+
+# Full path to rentec-login.sh on the VPS
+VPS_SCRIPT_PATH=/home/your_username/rentec_login/rentec-login.sh
