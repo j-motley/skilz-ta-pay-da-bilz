@@ -35,10 +35,10 @@ else
 fi
 
 CRON_MARKER="# rentec-keepalive"
-CRON_ENTRY="$SCHEDULE $KEEPALIVE_SCRIPT >> $SCRIPT_DIR/keepalive.log 2>&1 $CRON_MARKER"
+CRON_ENTRY="$SCHEDULE DISPLAY=:1 $KEEPALIVE_SCRIPT >> $SCRIPT_DIR/keepalive.log 2>&1 $CRON_MARKER"
 
 # Remove existing entry and add updated one
-(crontab -l 2>/dev/null | grep -v "$CRON_MARKER"; echo "$CRON_ENTRY") | crontab -
+{ crontab -l 2>/dev/null | grep -v "$CRON_MARKER" || true; echo "$CRON_ENTRY"; } | crontab -
 
 echo "Cron job installed:"
 echo "  Schedule : $SCHEDULE"

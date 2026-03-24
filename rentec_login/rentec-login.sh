@@ -36,10 +36,9 @@ if [[ -z "${RENTEC_USERNAME:-}" || -z "${RENTEC_PASSWORD:-}" ]]; then
     exit 1
 fi
 
-cleanup() {
-    agent-browser --profile "$PROFILE_DIR" close 2>/dev/null || true
-}
-trap cleanup EXIT
+# Ensure no stale daemon is running
+pkill -f agent-browser 2>/dev/null || true
+sleep 1
 
 echo "[rentec-login] Using Chrome profile: $PROFILE_DIR"
 echo "[rentec-login] Opening login page (headed mode for Cloudflare)..."
@@ -58,31 +57,41 @@ if ! echo "$CURRENT_URL" | grep -q "login"; then
     exit 0
 fi
 
-# Discover form elements and fill credentials
-agent-browser --profile "$PROFILE_DIR" snapshot -i
-
-agent-browser --profile "$PROFILE_DIR" fill @e1 "$RENTEC_USERNAME"
-agent-browser --profile "$PROFILE_DIR" fill @e2 "$RENTEC_PASSWORD"
-agent-browser --profile "$PROFILE_DIR" click @e3
-
-echo "[rentec-login] Credentials submitted. Waiting for redirect (up to 60s)..."
-echo "[rentec-login] If a Cloudflare challenge appears, solve it in the browser window."
-
+# Wait for Cloudflare to clear and login form to appear
+echo "[rentec-login] Waiting for Cloudflare to clear (up to 60s). Solve any challenge in the browser window."
 agent-browser --profile "$PROFILE_DIR" wait \
-    --fn "!window.location.href.includes('login.php')" \
-    --timeout 60000 || {
-    echo "ERROR: Timed out — check browser window for Cloudflare challenge." >&2
-    exit 1
-}
+    --fn "() => document.getElementById('username') !== null || !window.location.href.includes('login.php')" \
+    --timeout 60000
 
-agent-browser --profile "$PROFILE_DIR" wait --load networkidle
-
-FINAL_URL=$(agent-browser --profile "$PROFILE_DIR" get url)
-if echo "$FINAL_URL" | grep -q "login"; then
-    echo "ERROR: Login failed — still on login page. Verify credentials." >&2
-    exit 1
+# Fill login form or click continue button depending on what Chrome shows
+agent-browser --profile "$PROFILE_DIR" wait 1000
+AFTER_CF_URL=$(agent-browser --profile "$PROFILE_DIR" get url)
+if ! echo "$AFTER_CF_URL" | grep -q "login.php"; then
+    echo "[rentec-login] Already past login page. Current URL: $AFTER_CF_URL"
+elif agent-browser --profile "$PROFILE_DIR" is visible "#username" 2>/dev/null; then
+    echo "[rentec-login] Login form detected — filling credentials."
+    agent-browser --profile "$PROFILE_DIR" fill "#username" "$RENTEC_USERNAME"
+    agent-browser --profile "$PROFILE_DIR" fill "#password" "$RENTEC_PASSWORD"
+    agent-browser --profile "$PROFILE_DIR" find role checkbox check --name "Keep me logged in" 2>/dev/null || true
+    agent-browser --profile "$PROFILE_DIR" find role button click --name "Sign In"
+else
+    echo "[rentec-login] Continue button detected — clicking to proceed."
+    agent-browser --profile "$PROFILE_DIR" find role checkbox check --name "Keep me logged in" 2>/dev/null || true
+    agent-browser --profile "$PROFILE_DIR" find role button click
 fi
 
-echo "[rentec-login] Login successful. URL: $FINAL_URL"
-echo "[rentec-login] Chrome profile saved to: $PROFILE_DIR"
-echo "[rentec-login] Future keepalive runs will use this profile headlessly."
+echo "[rentec-login] Complete any 2FA in the browser window."
+echo "[rentec-login] The browser will stay open. Press Ctrl+C here when you reach the dashboard."
+echo "[rentec-login] Waiting up to 5 minutes..."
+agent-browser --profile "$PROFILE_DIR" wait \
+    --fn "window.location.href.includes('/owners/') && !window.location.href.includes('login')" \
+    --timeout 300000 || true
+
+FINAL_URL=$(agent-browser --profile "$PROFILE_DIR" get url 2>/dev/null || echo "unknown")
+if echo "$FINAL_URL" | grep -q "login"; then
+    echo "[rentec-login] WARNING: Still on login/2FA page. Complete 2FA in the browser, then close it manually."
+else
+    echo "[rentec-login] Login successful. URL: $FINAL_URL"
+    echo "[rentec-login] Chrome profile saved to: $PROFILE_DIR"
+    echo "[rentec-login] Future keepalive runs will use this profile headlessly."
+fi

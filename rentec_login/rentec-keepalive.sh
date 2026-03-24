@@ -53,9 +53,13 @@ send_alert() {
 }
 
 cleanup() {
-    agent-browser --profile "$PROFILE_DIR" close 2>/dev/null || true
+    pkill -f agent-browser 2>/dev/null || true
 }
 trap cleanup EXIT
+
+# Ensure no stale daemon is running so --profile is respected
+pkill -f agent-browser 2>/dev/null || true
+sleep 1
 
 log "Starting keepalive..."
 
@@ -72,30 +76,30 @@ if [[ ! -d "$PROFILE_DIR" ]]; then
     exit 1
 fi
 
-# ── Open site with persistent profile (headless) ────────────────────────────
-log "Opening $LOGIN_URL with profile $PROFILE_DIR..."
-agent-browser --profile "$PROFILE_DIR" open "$LOGIN_URL"
+# ── Open dashboard directly with persistent profile (headless) ───────────────
+log "Opening $DASHBOARD_URL with profile $PROFILE_DIR..."
+agent-browser --profile "$PROFILE_DIR" open "$DASHBOARD_URL"
 agent-browser --profile "$PROFILE_DIR" wait --load networkidle
 agent-browser --profile "$PROFILE_DIR" wait 3000
 
 CURRENT_URL=$(agent-browser --profile "$PROFILE_DIR" get url)
 
-# ── Already authenticated — go straight to dashboard ────────────────────────
+# ── Already authenticated — dashboard loaded ─────────────────────────────────
 if ! echo "$CURRENT_URL" | grep -q "login"; then
-    log "Already authenticated. Loading dashboard..."
-    agent-browser --profile "$PROFILE_DIR" open "$DASHBOARD_URL"
-    agent-browser --profile "$PROFILE_DIR" wait --load networkidle
     log "Keepalive complete. Dashboard loaded successfully."
     exit 0
 fi
 
 # ── Need to log in ───────────────────────────────────────────────────────────
 log "Session expired — attempting headless login..."
-agent-browser --profile "$PROFILE_DIR" snapshot -i
-
-agent-browser --profile "$PROFILE_DIR" fill @e1 "$RENTEC_USERNAME"
-agent-browser --profile "$PROFILE_DIR" fill @e2 "$RENTEC_PASSWORD"
-agent-browser --profile "$PROFILE_DIR" click @e3
+agent-browser --profile "$PROFILE_DIR" wait 1000
+if agent-browser --profile "$PROFILE_DIR" is visible "#username" 2>/dev/null; then
+    agent-browser --profile "$PROFILE_DIR" fill "#username" "$RENTEC_USERNAME"
+    agent-browser --profile "$PROFILE_DIR" fill "#password" "$RENTEC_PASSWORD"
+    agent-browser --profile "$PROFILE_DIR" find role button click --name "Sign In"
+else
+    agent-browser --profile "$PROFILE_DIR" find role button click
+fi
 
 agent-browser --profile "$PROFILE_DIR" wait --load networkidle
 agent-browser --profile "$PROFILE_DIR" wait 5000
