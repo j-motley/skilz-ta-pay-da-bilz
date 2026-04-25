@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codebase Context Engineering"
+  short_description: "Build AI agent context packs"
+  default_prompt: "Use $codebase-context-engineering to create an agent-ready codebase context pack."
