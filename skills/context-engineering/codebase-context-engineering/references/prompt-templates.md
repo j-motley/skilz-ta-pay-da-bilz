@@ -1,73 +1,45 @@
 # Prompt Templates
 
-Use these templates as starting points. Adapt them to the repository and user goal.
+Use these only as small reusable snippets. For the full context-builder prompt, read `context-builder-prompt.md`.
 
-## Meta-Prompt: Generate Codebase Context
+## Minimal User Prompt
 
 ```text
-You are creating an AI-agent context pack for this software repository.
-
-Goal:
-Produce concise, evidence-grounded context that helps AI coding agents safely understand, modify, test, review, and maintain this codebase.
-
-Process:
-1. Inspect the repository structure, docs, configuration, tests, CI, package manifests, and existing agent instructions.
-2. Identify build, test, lint, typecheck, format, and dev-server commands.
-3. Map major modules, architecture boundaries, domain concepts, and data/integration points.
-4. Capture established coding and testing conventions.
-5. Identify generated files, protected paths, secrets, migrations, risky areas, and stale or missing documentation.
-6. Produce the requested artifacts using clear sections, concrete file references, and explicit unknowns.
-7. Validate the result against realistic agent tasks and revise gaps.
-
-Constraints:
-- Do not invent repo facts. Mark unknowns.
-- Separate stable repo context from task-specific instructions.
-- Prefer observed commands over generic commands.
-- Keep output actionable and concise.
+Use $codebase-context-engineering to analyze this repository and generate `.agent-context/` files for future AI development agents. Create or update `AGENTS.md` only if it is useful as a discovery hook.
 ```
 
-## AGENTS.md Starter
+## Path-Or-Repo Prompt
+
+```text
+Use $codebase-context-engineering on <path-or-repo-url>.
+
+Generate durable context files that help future agents answer questions, plan changes, implement features, debug issues, document the system, and mentor a human developer through the codebase.
+
+Keep the output proportional to the codebase. Adapt the context file structure to what the repository actually is.
+```
+
+## AGENTS.md Discovery Hook
 
 ```md
 # Agent Instructions
 
-## Mission
+Before answering questions or changing code in this repository, read `.agent-context/README.md`.
 
-Help maintain this codebase safely and effectively. Preserve existing behavior unless the task explicitly requires a change.
-
-## Before Editing
-
-- Check the current worktree and avoid overwriting user changes.
-- Read nearby code, tests, and docs before changing behavior.
-- Prefer existing patterns and helper APIs.
-- Identify generated, vendored, or protected files before editing.
-
-## Verification
-
-- Run the narrowest useful checks first.
-- Broaden verification when touching shared behavior, public APIs, data models, or cross-module contracts.
-- Report commands run, results, and any checks that could not be run.
-
-## Reporting
-
-- Summarize what changed, why it changed, and how it was verified.
-- Include risks, assumptions, and follow-up work when relevant.
+The `.agent-context/` directory contains the codebase map, conventions, architecture notes, workflows, and task guides generated for AI development agents.
 ```
 
-## Role Prompt: Explorer
+## Context Refresh Prompt
 
 ```text
-You are the codebase explorer. Map the files, patterns, commands, and risks relevant to the task. Do not edit files. Return concise findings with file references, observed commands, assumptions, and suggested next steps.
+Use $codebase-context-engineering to refresh the existing `.agent-context/` files after recent codebase changes.
+
+Preserve accurate existing context, remove stale claims, add newly discovered patterns or commands, and mark uncertainty clearly. Do not rewrite everything if an incremental update is enough.
 ```
 
-## Role Prompt: Implementer
+## Context Audit Prompt
 
 ```text
-You are the implementer. Make scoped changes within your assigned ownership area. Follow existing patterns, preserve unrelated user changes, add or update tests proportional to risk, and report changed files plus verification results.
-```
+Use $codebase-context-engineering to audit the existing `.agent-context/` files.
 
-## Role Prompt: Reviewer
-
-```text
-You are the reviewer. Prioritize bugs, regressions, security issues, missing tests, and maintainability risks. Lead with findings ordered by severity and include precise file and line references.
+Check whether a future agent could quickly understand what this codebase does, how it is organized, what patterns to follow, how to verify work, and what areas are risky or uncertain. Report gaps and propose targeted updates.
 ```
