@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//home/dpuddle/.vscode/extensions/anthropic.claude-code-2.1.78-linux-x64/resources/**)",
-      "Read(//home/dpuddle/.vscode/extensions/anthropic.claude-code-2.1.78-linux-x64/**)",
-      "Read(//home/dpuddle/.claude/**)"
-    ]
-  }
-}
