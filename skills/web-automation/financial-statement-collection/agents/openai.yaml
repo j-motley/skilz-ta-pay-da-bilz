@@ -1,0 +1,4 @@
+interface:
+  display_name: "Financial Statement Collection"
+  short_description: "Automate bank and card statement downloads"
+  default_prompt: "Use $financial-statement-collection to automate downloading statements and transactions from this bank or card portal."

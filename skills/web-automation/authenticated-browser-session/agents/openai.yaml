@@ -1,0 +1,4 @@
+interface:
+  display_name: "Authenticated Browser Session"
+  short_description: "Durable logins behind MFA and bot protection"
+  default_prompt: "Use $authenticated-browser-session to set up a persistent, authenticated browser session for this site."

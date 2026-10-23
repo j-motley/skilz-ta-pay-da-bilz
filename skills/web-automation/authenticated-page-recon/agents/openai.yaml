@@ -1,0 +1,4 @@
+interface:
+  display_name: "Authenticated Page Recon"
+  short_description: "Map authenticated pages before scraping"
+  default_prompt: "Use $authenticated-page-recon to inspect these authenticated pages and write a brief for one extraction function."
