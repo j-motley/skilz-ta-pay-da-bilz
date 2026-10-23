@@ -50,6 +50,6 @@ Follow `templates/site-onboarding-checklist.md`. In short:
 
 ## Reference implementation
 
-`webauto` (Python + Playwright, real browser over CDP, Windows Credential Manager via `keyring`) implements every layer above. It has a `fetch` / `login` / `keepalive` / `history` / `creds` / `recon` / `schedule` CLI and an end-to-end test suite against a local fake bank. When working in a repo that already uses it, write a site module (`SITE` plus `COLLECTOR`) and use its CLI instead of rebuilding the machinery. Outside it, the references here hold enough to rebuild each layer in any language.
+`webauto` (Python + Playwright, real browser over CDP, Windows Credential Manager via `keyring`) implements every layer above. It has a `fetch` / `login` / `keepalive` / `history` / `creds` / `recon` / `schedule` CLI and an end-to-end test suite against a local fake bank. When working in a repo that already uses it, write a site module (`SITE` plus `COLLECTOR`) and use its CLI instead of rebuilding the machinery. For transaction exports it provides an `ExportCollector` base (one export per account per completed calendar month) and CSV/OFX/QFX/QBO validation, so a site only implements `accounts()` and `export()`. Outside it, the references here hold enough to rebuild each layer in any language.
 
 Read `references/troubleshooting.md` when a collector breaks.
